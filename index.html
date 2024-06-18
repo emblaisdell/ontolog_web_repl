@@ -4,57 +4,82 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Custom Language REPL</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
-  <style>
-    .repl-container {
-      max-width: 800px;
-      margin: auto;
-      padding: 20px;
-    }
+  <title>Monaco Editor with Custom Monarch Spec</title>
+  <!-- Load Monaco Editor stylesheet -->
+  <link rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.23.0/min/vs/editor/editor.main.css">
+  <!-- Load Monaco Editor script -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.23.0/min/vs/loader.js"></script>
+  <script>
+    // Before loading the editor, we need to set up the paths for the different modules
+    require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.23.0/min/vs' } });
+    // Now we can load the editor
+    require(['vs/editor/editor.main'], function () {
+      // Define your custom Monarch language definition
+      monaco.languages.register({ id: 'myCustomLanguage' });
 
-    .repl-output {
-      white-space: pre-wrap;
-      padding: 10px;
-      border-top: 1px solid #ccc;
-      margin-top: 10px;
-    }
-  </style>
+      monaco.languages.setMonarchTokensProvider('myCustomLanguage', {
+        tokenizer: {
+          root: [
+            // Decimal whole numbers
+            [/(\b|\!)\d+\b/, "number"],
+
+            // Decimal whole numbers
+            [/\$\d+\b/, "variable.value"],
+
+            // Function calls (assuming they start with a letter or underscore)
+            [/\b[A-Za-z_]+\w*(?=\()/, "function"],
+
+            // Keywords: mod, run, print
+            [/\b(mod|run|print|rw|import)\b/, "keyword"],
+
+            // Keywords: mod, run, print
+            [/~>/, "keyword"],
+
+            // Strings wrapped in "" or <>
+            [/"([^"\\]|\\.)*$/, "string.invalid"],  // non-terminated string
+            [/<([^<\\>]|\\.)*$/, "string.invalid"],  // non-terminated string
+            [/!?"/, "string", "@string_double"],
+            [/\$?!?</, "string", "@string_angle"]
+          ],
+
+          string_double: [
+            [/[^\\"]+/, "string"],
+            [/\\./, "string.escape"],
+            [/"/, "string", "@pop"]
+          ],
+
+          string_angle: [
+            [/[^\\>]+/, "string"],
+            [/\\./, "string.escape"],
+            [/>/, "string", "@pop"]
+          ]
+        }
+      });
+
+      // Create a new editor instance
+      var editor = monaco.editor.create(document.getElementById('editor'), {
+        value: `
+import <https://emblaisdell.github.io/ontolog/prelude.ont>
+
+mod concat 2
+
+rw concat(cons($0,$1),$2) ~> cons($0,concat($1,$2))
+rw concat(nil(),cons($0,$1)) ~> cons($0,$1)
+rw concat(nil(),nil()) ~> nil()
+
+run concat([8,6,7],[5,3,0,9]) ~> $0
+        `,
+        language: 'myCustomLanguage', // Set the language to your custom one
+        theme: 'vs-dark'
+      });
+    });
+  </script>
 </head>
 
 <body>
-  <div class="repl-container">
-    <h1>Custom Language REPL</h1>
-    <textarea id="code" name="code"></textarea>
-    <br />
-    <button id="run">Run</button>
-    <div id="output" class="repl-output"></div>
-  </div>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
-  <script>
-    // Initialize CodeMirror
-    const editor = CodeMirror.fromTextArea(document.getElementById('code'), {
-      lineNumbers: true,
-      mode: 'javascript'  // You can customize this for your language
-    });
-
-    document.getElementById('run').addEventListener('click', () => {
-      const code = editor.getValue();
-      const outputElement = document.getElementById('output');
-      try {
-        // Replace this with your actual interpreter logic
-        const output = interpreter(code);
-        outputElement.textContent = output;
-      } catch (error) {
-        outputElement.textContent = `Error: ${error.message}`;
-      }
-    });
-
-    // Example interpreter function
-    function interpreter(code) {
-      return `You entered: ${code}`;
-    }
-  </script>
+  <!-- Create a container for the editor -->
+  <div id="editor" style="width: 800px; height: 600px;"></div>
 </body>
 
 </html>
