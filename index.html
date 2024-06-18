@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Custom Language REPL</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+  <style>
+    .repl-container {
+      max-width: 800px;
+      margin: auto;
+      padding: 20px;
+    }
+
+    .repl-output {
+      white-space: pre-wrap;
+      padding: 10px;
+      border-top: 1px solid #ccc;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="repl-container">
+    <h1>Custom Language REPL</h1>
+    <textarea id="code" name="code"></textarea>
+    <br />
+    <button id="run">Run</button>
+    <div id="output" class="repl-output"></div>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+  <script>
+    // Initialize CodeMirror
+    const editor = CodeMirror.fromTextArea(document.getElementById('code'), {
+      lineNumbers: true,
+      mode: 'javascript'  // You can customize this for your language
+    });
+
+    document.getElementById('run').addEventListener('click', () => {
+      const code = editor.getValue();
+      const outputElement = document.getElementById('output');
+      try {
+        // Replace this with your actual interpreter logic
+        const output = interpreter(code);
+        outputElement.textContent = output;
+      } catch (error) {
+        outputElement.textContent = `Error: ${error.message}`;
+      }
+    });
+
+    // Example interpreter function
+    function interpreter(code) {
+      return `You entered: ${code}`;
+    }
+  </script>
+</body>
+
+</html>
